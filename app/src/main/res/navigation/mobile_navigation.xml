@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.optimasirute.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_input"
+        android:name="com.example.optimasirute.ui.input.InputFragment"
+        android:label="Pilih Wisata"
+        tools:layout="@layout/fragment_input" />
+
+    <fragment
+        android:id="@+id/navigation_result"
+        android:name="com.example.optimasirute.ui.result.ResultFragment"
+        android:label="Hasil Optimasi"
+        tools:layout="@layout/fragment_result" />
+
+    <!-- Action untuk pindah dari Home ke Input -->
+    <action
+        android:id="@+id/action_navigation_home_to_navigation_input"
+        app:destination="@id/navigation_input" />
+
+    <!-- Action untuk pindah dari Input ke Result -->
+    <action
+        android:id="@+id/action_navigation_input_to_navigation_result"
+        app:destination="@id/navigation_result" />
+
+</navigation>
