@@ -9,14 +9,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.optimasirute.R
 import com.example.optimasirute.data.model.Wisata
 
-class WisataAdapter(private val daftarWisata: List<Wisata>, initialSelectionIds: Set<String> ) :
-    RecyclerView.Adapter<WisataAdapter.WisataViewHolder>() {
+class WisataAdapter(
+    private val daftarWisata: List<Wisata>,
+    initialSelectionIds: Set<String>
+) : RecyclerView.Adapter<WisataAdapter.WisataViewHolder>() {
 
     private val selectedItems = mutableSetOf<Wisata>().apply {
         addAll(daftarWisata.filter { initialSelectionIds.contains(it.nama) })
     }
 
-    // Fungsi untuk mendapatkan daftar wisata yang dipilih
+    private var currentTimeInMinutes: Int = 480
+
+    fun updateCurrentTime(newTimeInMinutes: Int) {
+        currentTimeInMinutes = newTimeInMinutes
+        notifyDataSetChanged()
+    }
+
     fun getSelectedWisata(): List<Wisata> {
         return selectedItems.toList()
     }
@@ -29,7 +37,8 @@ class WisataAdapter(private val daftarWisata: List<Wisata>, initialSelectionIds:
 
     override fun onBindViewHolder(holder: WisataViewHolder, position: Int) {
         val wisata = daftarWisata[position]
-        holder.bind(wisata)
+        // Kirim waktu saat ini ke ViewHolder untuk logika tampilan
+        holder.bind(wisata, currentTimeInMinutes)
     }
 
     override fun getItemCount(): Int = daftarWisata.size
@@ -40,16 +49,23 @@ class WisataAdapter(private val daftarWisata: List<Wisata>, initialSelectionIds:
         private val tvDurasi: TextView = itemView.findViewById(R.id.tv_durasi)
         private val checkBox: CheckBox = itemView.findViewById(R.id.checkbox_pilih)
 
-        fun bind(wisata: Wisata) {
+        fun bind(wisata: Wisata, currentTime: Int) {
             tvNama.text = wisata.nama
             tvJam.text = "Buka: ${formatMinutes(wisata.buka)} - ${formatMinutes(wisata.tutup)}"
             tvDurasi.text = "Durasi Kunjungan: ${formatDurasi(wisata.durasi)}"
 
-            // Atur status checkbox berdasarkan data yang tersimpan
+            val isPossibleToVisit = currentTime < wisata.tutup
+
+            itemView.isEnabled = isPossibleToVisit
+            itemView.alpha = if (isPossibleToVisit) 1.0f else 0.5f
+            if (!isPossibleToVisit) {
+                selectedItems.remove(wisata)
+            }
             checkBox.isChecked = selectedItems.contains(wisata)
 
-            // Tambahkan listener klik pada seluruh item view
             itemView.setOnClickListener {
+                if (!itemView.isEnabled) return@setOnClickListener
+
                 if (checkBox.isChecked) {
                     selectedItems.remove(wisata)
                     checkBox.isChecked = false

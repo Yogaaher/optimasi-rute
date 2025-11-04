@@ -46,19 +46,38 @@ class ResultFragment : Fragment() {
 
         sharedViewModel.optimizationResult.observe(viewLifecycleOwner) { result ->
             if (result != null) {
-                // Hapus jadwal lama sebelum menampilkan yang baru
-                binding.itineraryContainer.removeAllViews()
+                if (result.isValid) {
+                    binding.tvTitle.text = "Jadwal Perjalanan Optimal"
+                    binding.itineraryContainer.removeAllViews()
+                    result.itinerary.forEach { item ->
+                        val itineraryView = createItineraryItemView(item)
+                        binding.itineraryContainer.addView(itineraryView)
+                    }
+                    val hours = result.totalMinutes / 60
+                    val minutes = result.totalMinutes % 60
+                    binding.tvTotalTimeResult.text = "$hours jam $minutes menit"
 
-                // Buat dan tampilkan jadwal detail
-                result.itinerary.forEach { item ->
-                    val itineraryView = createItineraryItemView(item)
-                    binding.itineraryContainer.addView(itineraryView)
+                    binding.itineraryContainer.isVisible = true
+                    binding.tvTotalTimeLabel.isVisible = true
+                    binding.tvTotalTimeResult.isVisible = true
+
+                } else {
+                    // Jika rute TIDAK valid, tampilkan pesan error
+                    binding.tvTitle.text = "Perencanaan Gagal"
+                    binding.itineraryContainer.removeAllViews() // Kosongkan view
+
+                    val errorTextView = TextView(requireContext()).apply {
+                        text = "Tidak ditemukan rute yang memungkinkan dengan waktu mulai dan pilihan wisata Anda. Coba ubah waktu mulai ke lebih awal atau pilih kombinasi wisata yang berbeda."
+                        textSize = 16f
+                        setPadding(0, 16, 0, 0)
+                    }
+                    binding.itineraryContainer.addView(errorTextView)
+
+                    // Sembunyikan view yang tidak relevan
+                    binding.itineraryContainer.isVisible = true
+                    binding.tvTotalTimeLabel.isVisible = false
+                    binding.tvTotalTimeResult.isVisible = false
                 }
-
-                // Tampilkan total waktu
-                val hours = result.totalMinutes / 60
-                val minutes = result.totalMinutes % 60
-                binding.tvTotalTimeResult.text = "$hours jam $minutes menit"
             }
         }
     }

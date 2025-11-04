@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.optimasirute.algorithm.EvolutionStrategies
+import com.example.optimasirute.algorithm.GeneticAlgorithm
 import com.example.optimasirute.algorithm.OptimizationResult
 import com.example.optimasirute.data.dummy.WisataDummy
 import com.example.optimasirute.data.model.Wisata
@@ -33,12 +33,12 @@ class SharedViewModel : ViewModel() {
         _isLoading.value = true
         viewModelScope.launch {
             val result = withContext(Dispatchers.Default) {
-                val es = EvolutionStrategies(
+                val ga = GeneticAlgorithm(
                     selectedWisata = selectedWisata,
                     travelTimeMatrix = WisataDummy.waktuTempuh,
                     startTimeInMinutes = startTime
                 )
-                es.run()
+                ga.run()
             }
             _optimizationResult.value = result
             _isLoading.value = false
