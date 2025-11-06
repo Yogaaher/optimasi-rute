@@ -6,6 +6,7 @@ import kotlin.random.Random
 
 data class ItineraryItem(
     val placeName: String,
+    val placePrice: Int,
     val arrivalTime: String,
     val visitStartTime: String,
     val visitEndTime: String,
@@ -43,12 +44,14 @@ class GeneticAlgorithm(
             val start = maxOf(startTimeInMinutes, place.buka)
             val end = start + place.durasi
             val isValid = startTimeInMinutes < place.tutup
+
             val itinerary = if (isValid) listOf(
                 ItineraryItem(
-                    place.nama,
-                    formatMinutes(startTimeInMinutes.toDouble()),
-                    formatMinutes(start.toDouble()),
-                    formatMinutes(end.toDouble())
+                    placeName = place.nama,
+                    placePrice = place.harga,
+                    arrivalTime = formatMinutes(startTimeInMinutes.toDouble()),
+                    visitStartTime = formatMinutes(start.toDouble()),
+                    visitEndTime = formatMinutes(end.toDouble())
                 )
             ) else emptyList()
             return OptimizationResult(selectedWisata, end - startTimeInMinutes, 1.0, itinerary, isValid)
@@ -238,6 +241,7 @@ class GeneticAlgorithm(
             itinerary.add(
                 ItineraryItem(
                     placeName = currentPlace.nama,
+                    placePrice = currentPlace.harga,
                     arrivalTime = formatMinutes(arrivalTime),
                     visitStartTime = formatMinutes(visitStartTime),
                     visitEndTime = formatMinutes(visitEndTime),

@@ -9,5 +9,6 @@ data class Wisata(
     val index: Int,
     val buka: Int,
     val tutup: Int,
-    val durasi: Int
+    val durasi: Int,
+    val harga: Int
 ) : Parcelable

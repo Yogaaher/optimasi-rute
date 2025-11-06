@@ -8,6 +8,8 @@ import com.example.optimasirute.algorithm.GeneticAlgorithm
 import com.example.optimasirute.algorithm.OptimizationResult
 import com.example.optimasirute.data.dummy.WisataDummy
 import com.example.optimasirute.data.model.Wisata
+import java.text.NumberFormat
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +24,27 @@ class SharedViewModel : ViewModel() {
 
     private val _startTimeInMinutes = MutableLiveData<Int>(480) // Default 08:00
     val startTimeInMinutes: LiveData<Int> = _startTimeInMinutes
+
+    private val _isBudgetEnabled = MutableLiveData<Boolean>(false)
+    val isBudgetEnabled: LiveData<Boolean> = _isBudgetEnabled
+
+    private val _budget = MutableLiveData<Long>(0L)
+    val budget: LiveData<Long> = _budget
+
+    private val _currentTotalPrice = MutableLiveData<Int>(0)
+    val currentTotalPrice: LiveData<Int> = _currentTotalPrice
+
+    fun setBudgetEnabled(isEnabled: Boolean) {
+        _isBudgetEnabled.value = isEnabled
+    }
+
+    fun setBudget(newBudget: Long) {
+        _budget.value = newBudget
+    }
+
+    fun updateTotalPrice(newPrice: Int) {
+        _currentTotalPrice.value = newPrice
+    }
 
     fun setStartTime(hour: Int, minute: Int) {
         _startTimeInMinutes.value = hour * 60 + minute
@@ -47,5 +70,12 @@ class SharedViewModel : ViewModel() {
 
     fun clearResult() {
         _optimizationResult.value = null
+    }
+
+    fun formatRupiah(number: Number): String {
+        val localeID = Locale("in", "ID")
+        val numberFormat = NumberFormat.getCurrencyInstance(localeID)
+        numberFormat.maximumFractionDigits = 0
+        return numberFormat.format(number)
     }
 }
