@@ -2,6 +2,15 @@ package com.example.optimasirute.data.dummy
 
 import com.example.optimasirute.data.model.Wisata
 
+data class PaketWisata(
+    val id: String,
+    val nama: String,
+    val ikon: String,
+    val daftarNamaWisata: List<String>,
+    val defaultStartHour: Int,
+    val defaultStartMinute: Int
+)
+
 object WisataDummy {
 
     // Daftar lengkap 30 wisata dengan tambahan HARGA TIKET (estimasi)
@@ -74,5 +83,32 @@ object WisataDummy {
         intArrayOf(50, 55, 50, 15, 5,  15, 10, 55, 20, 50, 60, 25, 30, 70, 20, 55, 30, 50, 60, 65, 5,  5,  55, 30, 60, 30, 15, 0,  60, 65),
         intArrayOf(25, 15, 25, 70, 60, 65, 55, 10, 60, 25, 35, 35, 30, 50, 70, 15, 30, 25, 10, 15, 65, 50, 15, 30, 40, 90, 65, 60, 0,  5 ),
         intArrayOf(30, 20, 30, 75, 65, 70, 60, 15, 65, 30, 40, 40, 35, 55, 75, 20, 35, 30, 15, 20, 70, 55, 20, 35, 45, 95, 70, 65, 5,  0 )
+    )
+
+    val daftarPaket = listOf(
+        PaketWisata(
+            id = "SEJARAH",
+            nama = "Paket Wisata Sejarah & Kota",
+            ikon = "ic_history",
+            daftarNamaWisata = listOf("Lawang Sewu", "Kota Lama Semarang", "Klenteng Sam Poo Kong", "Tugu Muda"),
+            defaultStartHour = 8,
+            defaultStartMinute = 0
+        ),
+        PaketWisata(
+            id = "ALAM_KELUARGA",
+            nama = "Paket Wisata Alam & Keluarga",
+            ikon = "ic_nature",
+            daftarNamaWisata = listOf("Taman Bunga Celosia", "Umbul Sidomukti", "Cimory on The Valley", "Eling Bening"),
+            defaultStartHour = 8,
+            defaultStartMinute = 30
+        ),
+        PaketWisata(
+            id = "PANTAI",
+            nama = "Paket Jelajah Pesisir",
+            ikon = "ic_beach",
+            daftarNamaWisata = listOf("Pantai Marina", "Puri Maerokoco", "Pantai Baruna", "Pantai Tirang"),
+            defaultStartHour = 9,
+            defaultStartMinute = 0
+        )
     )
 }

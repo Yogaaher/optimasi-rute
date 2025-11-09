@@ -68,6 +68,23 @@ class SharedViewModel : ViewModel() {
         }
     }
 
+    fun runQuickPackage(packageId: String) {
+        val allWisata = WisataDummy.daftarWisata
+        val selectedPackage = WisataDummy.daftarPaket.find { it.id == packageId }
+
+        if (selectedPackage == null) return
+
+        val packageWisataList = allWisata.filter { wisata ->
+            selectedPackage.daftarNamaWisata.contains(wisata.nama)
+        }
+
+        if (packageWisataList.isEmpty()) return
+        setStartTime(selectedPackage.defaultStartHour, selectedPackage.defaultStartMinute)
+
+        val startTime = startTimeInMinutes.value ?: (selectedPackage.defaultStartHour * 60 + selectedPackage.defaultStartMinute)
+        runOptimization(packageWisataList, startTime)
+    }
+
     fun clearResult() {
         _optimizationResult.value = null
     }
