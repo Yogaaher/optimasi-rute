@@ -13,44 +13,39 @@ data class PaketWisata(
 
 object WisataDummy {
 
-    // Daftar lengkap 30 wisata dengan tambahan HARGA TIKET (estimasi)
     val daftarWisata = listOf(
-        // 10 Lokasi Awal
-        Wisata("Lawang Sewu", 0, 480, 1200, 75, 20000),
-        Wisata("Klenteng Sam Poo Kong", 1, 480, 1200, 90, 35000),
-        Wisata("Kota Lama Semarang", 2, 0, 1439, 90, 0),
-        Wisata("Taman Bunga Celosia", 3, 480, 1020, 105, 25000),
-        Wisata("Saloka Theme Park", 4, 600, 1140, 210, 120000),
-        Wisata("Umbul Sidomukti", 5, 480, 1020, 150, 15000),
-        Wisata("Cimory on The Valley", 6, 540, 1200, 105, 20000),
-        Wisata("Kampoeng Wisata Taman Lele", 7, 540, 1020, 75, 10000),
-        Wisata("Watu Gunung", 8, 480, 960, 75, 25000),
-        Wisata("Taman Pandanaran", 9, 0, 1439, 45, 0),
-
-        // Tambahan 20 Lokasi Baru
-        Wisata("Masjid Agung Jawa Tengah", 10, 240, 1320, 60, 0),
-        Wisata("Pagoda Avalokitesvara", 11, 420, 1080, 60, 5000),
-        Wisata("Goa Kreo", 12, 480, 1020, 90, 10000),
-        Wisata("Brown Canyon", 13, 360, 1080, 90, 5000),
-        Wisata("Curug Lawe Benowo", 14, 420, 960, 150, 8000),
-        Wisata("Puri Maerokoco", 15, 420, 1080, 120, 20000),
-        Wisata("Hutan Tinjomoyo", 16, 420, 1020, 120, 5000),
-        Wisata("Tugu Muda", 17, 0, 1439, 30, 0),
-        Wisata("Pantai Marina", 18, 360, 1080, 75, 10000),
-        Wisata("Pantai Baruna", 19, 360, 1080, 60, 5000),
-        Wisata("Eling Bening", 20, 480, 1080, 120, 30000),
-        Wisata("Dusun Semilir", 21, 540, 1140, 180, 40000),
-        Wisata("Museum Ronggowarsito", 22, 480, 960, 90, 10000),
-        Wisata("Kampung Pelangi", 23, 420, 1020, 60, 3000),
-        Wisata("Kampung Batik Semarang", 24, 540, 1020, 90, 0),
-        Wisata("Puncak Telomoyo", 25, 300, 1020, 180, 15000),
-        Wisata("Curug Semirang", 26, 480, 960, 120, 10000),
-        Wisata("Bukit Cinta Rawa Pening", 27, 420, 1080, 90, 15000),
-        Wisata("Pantai Tirang", 28, 360, 1080, 90, 5000),
-        Wisata("Semarang Zoo (Mangkang)", 29, 480, 1020, 120, 30000)
+        Wisata("Lawang Sewu", 0, 480, 1200, 75, 20000, 25000),
+        Wisata("Klenteng Sam Poo Kong", 1, 480, 1200, 90, 35000, 40000),
+        Wisata("Kota Lama Semarang", 2, 0, 1439, 90, 0, 0),
+        Wisata("Taman Bunga Celosia", 3, 480, 1020, 105, 25000, 30000),
+        Wisata("Saloka Theme Park", 4, 600, 1140, 210, 120000, 150000),
+        Wisata("Umbul Sidomukti", 5, 480, 1020, 150, 15000, 20000),
+        Wisata("Cimory on The Valley", 6, 540, 1200, 105, 20000, 25000),
+        Wisata("Kampoeng Wisata Taman Lele", 7, 540, 1020, 75, 10000, 15000),
+        Wisata("Watu Gunung", 8, 480, 960, 75, 25000, 25000),
+        Wisata("Taman Pandanaran", 9, 0, 1439, 45, 0, 0),
+        Wisata("Masjid Agung Jawa Tengah", 10, 240, 1320, 60, 0, 0),
+        Wisata("Pagoda Avalokitesvara", 11, 420, 1080, 60, 5000, 10000),
+        Wisata("Goa Kreo", 12, 480, 1020, 90, 10000, 15000),
+        Wisata("Brown Canyon", 13, 360, 1080, 90, 5000, 5000),
+        Wisata("Curug Lawe Benowo", 14, 420, 960, 150, 8000, 10000),
+        Wisata("Puri Maerokoco", 15, 420, 1080, 120, 20000, 25000),
+        Wisata("Hutan Tinjomoyo", 16, 420, 1020, 120, 5000, 7000),
+        Wisata("Tugu Muda", 17, 0, 1439, 30, 0, 0),
+        Wisata("Pantai Marina", 18, 360, 1080, 75, 10000, 15000),
+        Wisata("Pantai Baruna", 19, 360, 1080, 60, 5000, 5000),
+        Wisata("Eling Bening", 20, 480, 1080, 120, 30000, 35000),
+        Wisata("Dusun Semilir", 21, 540, 1140, 180, 40000, 60000),
+        Wisata("Museum Ronggowarsito", 22, 480, 960, 90, 10000, 10000),
+        Wisata("Kampung Pelangi", 23, 420, 1020, 60, 3000, 5000),
+        Wisata("Kampung Batik Semarang", 24, 540, 1020, 90, 0, 0),
+        Wisata("Puncak Telomoyo", 25, 300, 1020, 180, 15000, 20000),
+        Wisata("Curug Semirang", 26, 480, 960, 120, 10000, 15000),
+        Wisata("Bukit Cinta Rawa Pening", 27, 420, 1080, 90, 15000, 20000),
+        Wisata("Pantai Tirang", 28, 360, 1080, 90, 5000, 10000),
+        Wisata("Semarang Zoo (Mangkang)", 29, 480, 1020, 120, 30000, 35000)
     )
 
-    // Matriks waktu tempuh yang diperluas untuk 30 lokasi (estimasi)
     val waktuTempuh = arrayOf(
         //   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29
         intArrayOf(0,  15,  5, 60, 50, 55, 45, 20, 50, 5, 20, 25, 30, 35, 60, 15, 30, 2, 20, 25, 55, 40, 15, 20, 15, 80, 55, 50, 25, 30),

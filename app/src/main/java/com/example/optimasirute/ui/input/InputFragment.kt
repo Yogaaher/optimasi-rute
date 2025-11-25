@@ -1,5 +1,6 @@
 package com.example.optimasirute.ui.input
 
+import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
 import android.os.Handler
@@ -20,6 +21,9 @@ import com.example.optimasirute.R
 import com.example.optimasirute.data.dummy.WisataDummy
 import com.example.optimasirute.databinding.FragmentInputBinding
 import com.example.optimasirute.ui.SharedViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class InputFragment : Fragment() {
 
@@ -42,15 +46,11 @@ class InputFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupRecyclerView()
         setupStartTimePicker()
+        setupDatePicker()
         setupBudgetFeature()
-
-        binding.btnProcess.setOnClickListener {
-            processRoute()
-        }
-
+        binding.btnProcess.setOnClickListener { processRoute() }
         observeViewModel()
     }
 
@@ -62,6 +62,13 @@ class InputFragment : Fragment() {
             wisataAdapter.updateCurrentTime(minutes)
         }
 
+        sharedViewModel.selectedDate.observe(viewLifecycleOwner) { calendar ->
+            val sdf = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("in", "ID"))
+            binding.tvDateValue.text = sdf.format(calendar.time)
+            wisataAdapter.updateDayType(sharedViewModel.isWeekend())
+            updateTotalPriceAndBudgetStatus()
+        }
+
         sharedViewModel.isBudgetEnabled.observe(viewLifecycleOwner) { isEnabled ->
             binding.layoutInputBudget.visibility = if (isEnabled) View.VISIBLE else View.GONE
             if (!isEnabled) {
@@ -71,9 +78,7 @@ class InputFragment : Fragment() {
             updateAdapterBasedOnBudget()
         }
 
-        sharedViewModel.budget.observe(viewLifecycleOwner) {
-            updateAdapterBasedOnBudget()
-        }
+        sharedViewModel.budget.observe(viewLifecycleOwner) { updateAdapterBasedOnBudget() }
 
         sharedViewModel.currentTotalPrice.observe(viewLifecycleOwner) { price ->
             binding.tvTotalPrice.text = "Total Harga: ${sharedViewModel.formatRupiah(price)}"
@@ -83,30 +88,40 @@ class InputFragment : Fragment() {
     private fun setupStartTimePicker() {
         binding.cardStartTime.setOnClickListener {
             val currentTime = sharedViewModel.startTimeInMinutes.value ?: 480
-            val currentHour = currentTime / 60
-            val currentMinute = currentTime % 60
-
             TimePickerDialog(
                 requireContext(),
-                { _, hourOfDay, minute ->
-                    validateAndSetStartTime(hourOfDay, minute)
-                },
-                currentHour,
-                currentMinute,
+                { _, hourOfDay, minute -> validateAndSetStartTime(hourOfDay, minute) },
+                currentTime / 60,
+                currentTime % 60,
                 true
             ).show()
         }
     }
 
+    private fun setupDatePicker() {
+        binding.cardDate.setOnClickListener {
+            val calendar = sharedViewModel.selectedDate.value ?: Calendar.getInstance()
+
+            val datePickerDialog = DatePickerDialog(
+                requireContext(),
+                { _, year, month, dayOfMonth -> sharedViewModel.setSelectedDate(year, month, dayOfMonth) },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+            datePickerDialog.datePicker.minDate = System.currentTimeMillis()
+
+            datePickerDialog.show()
+        }
+    }
+
     private fun validateAndSetStartTime(hour: Int, minute: Int) {
         val newStartTimeInMinutes = hour * 60 + minute
-        val allWisata = WisataDummy.daftarWisata
-        val isTooLateForAll = allWisata.all { newStartTimeInMinutes >= it.tutup }
-
-        if (isTooLateForAll) {
+        if (WisataDummy.daftarWisata.all { newStartTimeInMinutes >= it.tutup }) {
             AlertDialog.Builder(requireContext())
                 .setTitle("Waktu Mulai Tidak Valid")
-                .setMessage("Waktu mulai yang Anda pilih sudah melewati jam operasional semua tempat wisata. Silakan pilih waktu yang lebih awal.")
+                .setMessage("Waktu mulai yang Anda pilih sudah melewati jam operasional semua tempat wisata.")
                 .setPositiveButton("OK", null)
                 .show()
         } else {
@@ -115,16 +130,13 @@ class InputFragment : Fragment() {
     }
 
     private fun setupBudgetFeature() {
-        binding.switchBudget.setOnCheckedChangeListener { _, isChecked ->
-            sharedViewModel.setBudgetEnabled(isChecked)
-        }
+        binding.switchBudget.setOnCheckedChangeListener { _, isChecked -> sharedViewModel.setBudgetEnabled(isChecked) }
 
         binding.inputBudget.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 debounceHandler.removeCallbacks(budgetWorkRunnable)
                 budgetWorkRunnable = Runnable {
-                    val budgetValue = s.toString().toLongOrNull() ?: 0L
-                    sharedViewModel.setBudget(budgetValue)
+                    sharedViewModel.setBudget(s.toString().toLongOrNull() ?: 0L)
                 }
                 debounceHandler.postDelayed(budgetWorkRunnable, 1000)
             }
@@ -140,16 +152,14 @@ class InputFragment : Fragment() {
         binding.rvWisata.apply {
             adapter = wisataAdapter
             layoutManager = LinearLayoutManager(requireContext())
-            addItemDecoration(
-                DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL)
-            )
+            addItemDecoration(DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL))
         }
         updateTotalPriceAndBudgetStatus()
     }
 
     private fun updateTotalPriceAndBudgetStatus() {
         val selected = wisataAdapter.getSelectedWisata()
-        val totalPrice = selected.sumOf { it.harga }
+        val totalPrice = selected.sumOf { wisataAdapter.getCurrentPrice(it) }
         sharedViewModel.updateTotalPrice(totalPrice)
         updateAdapterBasedOnBudget()
     }
@@ -159,27 +169,29 @@ class InputFragment : Fragment() {
         val budget = sharedViewModel.budget.value ?: 0L
 
         if (isEnabled && budget > 0) {
-            var currentTotal = wisataAdapter.getSelectedWisata().sumOf { it.harga }.toLong()
+            var currentTotal = wisataAdapter.getSelectedWisata().sumOf {
+                wisataAdapter.getCurrentPrice(it).toLong()
+            }
             while (currentTotal > budget && wisataAdapter.getSelectedWisata().isNotEmpty()) {
                 wisataAdapter.removeLastSelectedItem()
-                currentTotal = wisataAdapter.getSelectedWisata().sumOf { it.harga }.toLong()
+                (binding.rvWisata.adapter as? WisataAdapter)?.notifyDataSetChanged()
+                currentTotal = wisataAdapter.getSelectedWisata().sumOf {
+                    wisataAdapter.getCurrentPrice(it).toLong()
+                }
                 sharedViewModel.updateTotalPrice(currentTotal.toInt())
                 Toast.makeText(requireContext(), "Pilihan terakhir dihapus karena melebihi budget", Toast.LENGTH_SHORT).show()
             }
         }
-
         val isBudgetFeatureActive = isEnabled && budget > 0
         wisataAdapter.updateBudgetAndAvailability(budget, isBudgetFeatureActive)
     }
 
     private fun processRoute() {
         val selectedWisata = wisataAdapter.getSelectedWisata()
-
         if (selectedWisata.size < 2) {
             Toast.makeText(requireContext(), "Pilih minimal 2 tempat wisata", Toast.LENGTH_SHORT).show()
             return
         }
-
         val startTime = sharedViewModel.startTimeInMinutes.value ?: 480
         sharedViewModel.runOptimization(selectedWisata, startTime)
         findNavController().navigate(R.id.action_navigation_input_to_navigation_result)

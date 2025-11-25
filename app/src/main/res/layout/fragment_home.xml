@@ -79,6 +79,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_paket_sejarah"/>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_paket_pantai"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Paket Wisata Alam &amp; Pantai"
+        app:icon="@drawable/ic_beach"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_paket_alam"/>
+
     <Button
         android:id="@+id/btn_start"
         android:layout_width="0dp"

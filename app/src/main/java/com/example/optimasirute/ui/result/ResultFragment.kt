@@ -1,6 +1,6 @@
 package com.example.optimasirute.ui.result
 
-import android.annotation.SuppressLint
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +15,7 @@ import com.example.optimasirute.algorithm.ItineraryItem
 import com.example.optimasirute.algorithm.OptimizationResult
 import com.example.optimasirute.databinding.FragmentResultBinding
 import com.example.optimasirute.ui.SharedViewModel
+import java.util.Locale
 
 class ResultFragment : Fragment() {
 
@@ -34,9 +35,12 @@ class ResultFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeViewModel()
+
         binding.btnBackToInput.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        setupExpandableDetails()
     }
 
     private fun observeViewModel() {
@@ -52,9 +56,9 @@ class ResultFragment : Fragment() {
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun updateResultView(result: OptimizationResult) {
         binding.itineraryContainer.removeAllViews()
+        binding.cardDetails.isVisible = result.isValid
 
         if (result.isValid) {
             binding.tvTitle.text = "Jadwal Perjalanan Optimal"
@@ -66,20 +70,32 @@ class ResultFragment : Fragment() {
 
             val hours = result.totalMinutes / 60
             val minutes = result.totalMinutes % 60
-            val totalPrice = result.itinerary.sumOf { it.placePrice } // Lebih akurat dari itinerary
+            val totalPrice = result.itinerary.sumOf { it.placePrice }
+            val executionSeconds = result.executionTimeMillis / 1000.0
 
+            binding.tvExecutionTimeDetail.text =
+                String.format(Locale.US, "Waktu Proses: %.2f detik", executionSeconds)
             binding.tvTotalTimeLabel.text = "Total Durasi & Harga Tiket"
-            binding.tvTotalTimeResult.text = "$hours jam $minutes menit (${sharedViewModel.formatRupiah(totalPrice)})"
+            binding.tvTotalTimeResult.text =
+                "$hours jam $minutes menit (${sharedViewModel.formatRupiah(totalPrice)})"
 
             binding.itineraryContainer.isVisible = true
             binding.tvTotalTimeLabel.isVisible = true
             binding.tvTotalTimeResult.isVisible = true
 
+            binding.tvFitnessDetail.text =
+                String.format(Locale.US, "Nilai Fitness Terbaik: %.8f", result.fitness)
+            binding.tvGenerationDetail.text =
+                "Keberagaman Akhir: ${result.finalDiversity} rute unik ditemukan"
+            binding.tvPopulationDetail.text =
+                "Diproses selama ${result.totalGenerations} generasi dengan ${result.finalPopulationCount} populasi"
+
         } else {
             binding.tvTitle.text = "Perencanaan Gagal"
 
             val errorTextView = TextView(requireContext()).apply {
-                text = "Tidak ditemukan rute yang memungkinkan dengan waktu mulai dan pilihan wisata Anda. Coba ubah waktu mulai ke lebih awal atau pilih kombinasi wisata yang berbeda."
+                text =
+                    "Tidak ditemukan rute yang memungkinkan dengan waktu mulai dan pilihan wisata Anda. Coba ubah waktu mulai ke lebih awal atau pilih kombinasi wisata yang berbeda."
                 textSize = 16f
                 setPadding(0, 16, 0, 0)
             }
@@ -88,6 +104,21 @@ class ResultFragment : Fragment() {
             binding.itineraryContainer.isVisible = true
             binding.tvTotalTimeLabel.isVisible = false
             binding.tvTotalTimeResult.isVisible = false
+        }
+    }
+
+    private fun setupExpandableDetails() {
+        binding.detailsHeader.setOnClickListener {
+            val content = binding.detailsContent
+            val arrow = binding.arrowIcon
+
+            if (content.isVisible) {
+                content.isVisible = false
+                ObjectAnimator.ofFloat(arrow, "rotation", 180f, 0f).setDuration(300).start()
+            } else {
+                content.isVisible = true
+                ObjectAnimator.ofFloat(arrow, "rotation", 0f, 180f).setDuration(300).start()
+            }
         }
     }
 
@@ -102,7 +133,6 @@ class ResultFragment : Fragment() {
 
         title.text = item.placeName
 
-        // Tampilkan harga atau "Gratis"
         price.text = if (item.placePrice > 0) {
             "Harga Tiket: ${sharedViewModel.formatRupiah(item.placePrice)}"
         } else {

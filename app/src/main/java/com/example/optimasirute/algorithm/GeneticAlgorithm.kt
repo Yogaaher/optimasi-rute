@@ -19,13 +19,18 @@ data class OptimizationResult(
     val totalMinutes: Int,
     val fitness: Double,
     val itinerary: List<ItineraryItem>,
-    val isValid: Boolean
+    val isValid: Boolean,
+    val finalPopulationCount: Int,
+    val totalGenerations: Int,
+    val finalDiversity: Int,
+    val executionTimeMillis: Long
 )
 
 class GeneticAlgorithm(
     private val selectedWisata: List<Wisata>,
     private val travelTimeMatrix: Array<IntArray>,
     private val startTimeInMinutes: Int,
+    private val isWeekend: Boolean,
     private val populationSize: Int = 100,
     private val generations: Int = 200,
     private var mutationRate: Double = 0.1,
@@ -36,15 +41,18 @@ class GeneticAlgorithm(
     private data class Chromosome(val route: List<Wisata>, var fitness: Double = 0.0)
 
     fun run(): OptimizationResult {
+        // Mulai timer
+        val startTime = System.currentTimeMillis()
+
         if (selectedWisata.isEmpty()) {
-            return OptimizationResult(emptyList(), 0, 0.0, emptyList(), false)
+            val endTime = System.currentTimeMillis()
+            return OptimizationResult(emptyList(), 0, 0.0, emptyList(), false, 0, 0, 0, endTime - startTime)
         }
         if (selectedWisata.size == 1) {
             val place = selectedWisata.first()
             val start = maxOf(startTimeInMinutes, place.buka)
             val end = start + place.durasi
             val isValid = startTimeInMinutes < place.tutup
-
             val itinerary = if (isValid) listOf(
                 ItineraryItem(
                     placeName = place.nama,
@@ -54,39 +62,34 @@ class GeneticAlgorithm(
                     visitEndTime = formatMinutes(end.toDouble())
                 )
             ) else emptyList()
-            return OptimizationResult(selectedWisata, end - startTimeInMinutes, 1.0, itinerary, isValid)
+            val endTime = System.currentTimeMillis()
+            return OptimizationResult(selectedWisata, end - startTimeInMinutes, 1.0, itinerary, isValid, 1, 1, 1, endTime - startTime)
         }
 
         var population = createInitialPopulation()
-        var bestChromosome: Chromosome? = null
+        var bestChromosomeOverall: Chromosome? = null
 
-        repeat(generations) {
+        repeat(generations) { currentGeneration ->
             population.forEach { it.fitness = calculateFitness(it.route).second }
             population = population.sortedByDescending { it.fitness }.toMutableList()
 
-            val currentBest = population.first()
-            if (bestChromosome == null || currentBest.fitness > bestChromosome!!.fitness) {
-                bestChromosome = currentBest
+            val bestInCurrentGen = population.first()
+            if (bestChromosomeOverall == null || bestInCurrentGen.fitness > bestChromosomeOverall!!.fitness) {
+                bestChromosomeOverall = bestInCurrentGen
             }
 
             checkDiversityAndAdjustMutation(population)
 
-            val newPopulation = mutableListOf(bestChromosome!!)
+            val newPopulation = mutableListOf(bestInCurrentGen)
 
             while (newPopulation.size < populationSize) {
                 val parent1 = modifiedTournamentSelection(population)
                 val parent2 = modifiedTournamentSelection(population)
 
-                var child1: Chromosome
-                var child2: Chromosome
-
-                if (Random.nextDouble() < crossoverRate) {
-                    val (offspring1, offspring2) = copyOrderCrossover(parent1, parent2)
-                    child1 = offspring1
-                    child2 = offspring2
+                val (child1, child2) = if (Random.nextDouble() < crossoverRate) {
+                    copyOrderCrossover(parent1, parent2)
                 } else {
-                    child1 = parent1
-                    child2 = parent2
+                    Pair(parent1, parent2)
                 }
 
                 enhancedSwapMutation(child1, mutationRate)
@@ -100,11 +103,26 @@ class GeneticAlgorithm(
             population = newPopulation
         }
 
-        val finalBest = population.maxByOrNull { it.fitness } ?: bestChromosome!!
+        val finalBest = bestChromosomeOverall!!
         val (totalTime, fitness, itinerary) = calculateFitness(finalBest.route)
         val isRouteValid = itinerary.isNotEmpty()
+        val uniqueIndividuals = population.distinctBy { it.route }.size
 
-        return OptimizationResult(finalBest.route, totalTime, fitness, itinerary, isRouteValid)
+        // Hentikan timer
+        val endTime = System.currentTimeMillis()
+        val executionTime = endTime - startTime
+
+        return OptimizationResult(
+            finalBest.route,
+            totalTime,
+            fitness,
+            itinerary,
+            isRouteValid,
+            population.size,
+            generations,
+            uniqueIndividuals,
+            executionTime
+        )
     }
 
     private fun createInitialPopulation(): MutableList<Chromosome> {
@@ -149,21 +167,18 @@ class GeneticAlgorithm(
         var currentP2Index = 0
         var currentP1Index = 0
 
-        for (i in 0 until size) {
-            if (offspring1[i] == null) {
-                while (middle1.contains(p2[currentP2Index])) {
-                    currentP2Index++
-                }
-                offspring1[i] = p2[currentP2Index]
-                currentP2Index++
+        for (i in (0 until start) + (end + 1 until size)) {
+            while (middle1.contains(p2[currentP2Index])) {
+                currentP2Index = (currentP2Index + 1) % size
             }
-            if (offspring2[i] == null) {
-                while (middle2.contains(p1[currentP1Index])) {
-                    currentP1Index++
-                }
-                offspring2[i] = p1[currentP1Index]
-                currentP1Index++
+            offspring1[i] = p2[currentP2Index]
+            currentP2Index = (currentP2Index + 1) % size
+
+            while (middle2.contains(p1[currentP1Index])) {
+                currentP1Index = (currentP1Index + 1) % size
             }
+            offspring2[i] = p1[currentP1Index]
+            currentP1Index = (currentP1Index + 1) % size
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -241,7 +256,7 @@ class GeneticAlgorithm(
             itinerary.add(
                 ItineraryItem(
                     placeName = currentPlace.nama,
-                    placePrice = currentPlace.harga,
+                    placePrice = if (this.isWeekend && currentPlace.hargaWeekend != null) currentPlace.hargaWeekend else currentPlace.harga,
                     arrivalTime = formatMinutes(arrivalTime),
                     visitStartTime = formatMinutes(visitStartTime),
                     visitEndTime = formatMinutes(visitEndTime),

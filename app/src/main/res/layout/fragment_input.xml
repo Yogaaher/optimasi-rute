@@ -31,7 +31,6 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_title">
 
         <TextView
-            android:id="@+id/tv_start_time_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Waktu Mulai Wisata"
@@ -48,20 +47,17 @@
             app:cardElevation="4dp"
             app:strokeColor="@color/material_on_surface_stroke"
             app:strokeWidth="1dp">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="12dp">
-
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_clock"
                     app:tint="?attr/colorPrimary" />
-
                 <TextView
                     android:id="@+id/tv_start_time_value"
                     android:layout_width="0dp"
@@ -72,11 +68,59 @@
                     android:textSize="18sp"
                     android:textStyle="bold"
                     tools:text="08:00" />
-
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/date_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/start_time_container">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tanggal Perjalanan"
+            android:textSize="16sp" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/material_on_surface_stroke"
+            app:strokeWidth="1dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_date"
+                    app:tint="?attr/colorPrimary" />
+                <TextView
+                    android:id="@+id/tv_date_value"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    tools:text="Sabtu, 11 November 2025" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <LinearLayout
@@ -88,21 +132,19 @@
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/start_time_container">
+        app:layout_constraintTop_toBottomOf="@+id/date_container">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
-
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Gunakan Batasan Budget"
                 android:textSize="16sp" />
-
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_budget"
                 android:layout_width="wrap_content"
@@ -118,17 +160,14 @@
             android:hint="Masukkan Budget (Rp)"
             android:visibility="gone"
             tools:visibility="visible">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_budget"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number" />
         </com.google.android.material.textfield.TextInputLayout>
-
     </LinearLayout>
 
-    <!-- TextView untuk menampilkan total harga yang dipilih -->
     <TextView
         android:id="@+id/tv_total_price"
         android:layout_width="wrap_content"
@@ -144,11 +183,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Pilih Tujuan Wisata:"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/budget_container" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_total_price" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_wisata"

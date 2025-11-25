@@ -14,38 +14,38 @@ import java.util.Locale
 class WisataAdapter(
     private val daftarWisata: List<Wisata>,
     initialSelectionIds: Set<String>,
-    private val onSelectionChanged: () -> Unit // Callback
+    private val onSelectionChanged: () -> Unit
 ) : RecyclerView.Adapter<WisataAdapter.WisataViewHolder>() {
 
-    // Menyimpan item yang dipilih pengguna
     private val selectedItems = mutableSetOf<Wisata>().apply {
         addAll(daftarWisata.filter { initialSelectionIds.contains(it.nama) })
     }
+    private val selectionOrder = mutableListOf<Wisata>().apply {
+        addAll(selectedItems)
+    }
 
-    // Variabel untuk menyimpan state filter
-    private var currentTimeInMinutes: Int = 480 // Default 08:00
-
-    private val selectionOrder = mutableListOf<Wisata>()
-
+    private var currentTimeInMinutes: Int = 480
+    private var isWeekend: Boolean = false
     private val affordabilityMap = mutableMapOf<Wisata, Boolean>()
 
-    // Fungsi ini dipanggil dari Fragment untuk memperbarui waktu
     fun updateCurrentTime(newTimeInMinutes: Int) {
-        currentTimeInMinutes = newTimeInMinutes
+        this.currentTimeInMinutes = newTimeInMinutes
         notifyDataSetChanged()
     }
 
-    // Fungsi ini dipanggil dari Fragment untuk memperbarui status budget
+    fun updateDayType(isWeekend: Boolean) {
+        this.isWeekend = isWeekend
+    }
+
     fun updateBudgetAndAvailability(budget: Long, isBudgetFeatureActive: Boolean) {
         affordabilityMap.clear()
-
         if (isBudgetFeatureActive) {
-            val currentTotal = selectedItems.sumOf { it.harga }
+            val currentTotal = selectedItems.sumOf { getCurrentPrice(it) }
             val remainingBudget = budget - currentTotal
 
             daftarWisata.forEach { wisata ->
                 val canAfford = if (!selectedItems.contains(wisata)) {
-                    wisata.harga <= remainingBudget
+                    getCurrentPrice(wisata) <= remainingBudget
                 } else {
                     true
                 }
@@ -55,21 +55,23 @@ class WisataAdapter(
         notifyDataSetChanged()
     }
 
-    fun getSelectedWisata(): List<Wisata> {
-        return selectedItems.toList()
-    }
-
     fun removeLastSelectedItem() {
         if (selectionOrder.isNotEmpty()) {
             val lastItem = selectionOrder.removeAt(selectionOrder.lastIndex)
             selectedItems.remove(lastItem)
-            notifyDataSetChanged()
         }
     }
 
+    fun getSelectedWisata(): List<Wisata> {
+        return selectedItems.toList()
+    }
+
+    fun getCurrentPrice(wisata: Wisata): Int {
+        return if (isWeekend && wisata.hargaWeekend != null) wisata.hargaWeekend else wisata.harga
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WisataViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_wisata_input, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_wisata_input, parent, false)
         return WisataViewHolder(view)
     }
 
@@ -88,28 +90,24 @@ class WisataAdapter(
         private val checkBox: CheckBox = itemView.findViewById(R.id.checkbox_pilih)
 
         fun bind(wisata: Wisata) {
-            // 1. Tampilkan semua data
             tvNama.text = wisata.nama
             tvJam.text = "Buka: ${formatMinutes(wisata.buka)} - ${formatMinutes(wisata.tutup)}"
             tvDurasi.text = "Durasi Kunjungan: ${formatDurasi(wisata.durasi)}"
-            tvHarga.text = "Harga: ${formatRupiah(wisata.harga)}"
+            tvHarga.text = "Harga: ${formatRupiah(getCurrentPrice(wisata))}"
 
-            // 2. Tentukan apakah item bisa dipilih (cek waktu & budget)
             val isPossibleByTime = currentTimeInMinutes < wisata.tutup
             val isPossibleByBudget = affordabilityMap[wisata] ?: true
             val isEnabled = isPossibleByTime && isPossibleByBudget
 
-            // 3. Atur tampilan berdasarkan status
             itemView.isEnabled = isEnabled
             itemView.alpha = if (isEnabled) 1.0f else 0.5f
 
-            // 4. Jika item menjadi tidak bisa dipilih, hapus dari seleksi
-            if (!isEnabled) {
+            if (!isEnabled && selectedItems.contains(wisata)) {
                 selectedItems.remove(wisata)
+                selectionOrder.remove(wisata)
             }
             checkBox.isChecked = selectedItems.contains(wisata)
 
-            // 5. Atur listener klik
             itemView.setOnClickListener {
                 if (!itemView.isEnabled) return@setOnClickListener
 
@@ -122,12 +120,10 @@ class WisataAdapter(
                     selectionOrder.add(wisata)
                     checkBox.isChecked = true
                 }
-                // Beri tahu Fragment bahwa ada perubahan seleksi
                 onSelectionChanged()
             }
         }
 
-        // --- Fungsi Helper ---
         private fun formatMinutes(minutes: Int): String {
             val hours = minutes / 60
             val mins = minutes % 60
