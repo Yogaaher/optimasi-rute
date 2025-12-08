@@ -10,6 +10,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.optimasirute.R
 import com.example.optimasirute.data.dummy.WisataDummy
+import com.example.optimasirute.data.model.Wisata
 import com.example.optimasirute.databinding.FragmentInputBinding
 import com.example.optimasirute.ui.SharedViewModel
 import java.text.SimpleDateFormat
@@ -32,6 +34,7 @@ class InputFragment : Fragment() {
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var wisataAdapter: WisataAdapter
+    private var selectedStartPoint: Wisata? = null
 
     private val debounceHandler = Handler(Looper.getMainLooper())
     private var budgetWorkRunnable = Runnable {}
@@ -46,12 +49,34 @@ class InputFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Setup UI Components
+        setupExpandableLayout()
         setupRecyclerView()
         setupStartTimePicker()
         setupDatePicker()
         setupBudgetFeature()
+
         binding.btnProcess.setOnClickListener { processRoute() }
         observeViewModel()
+    }
+
+    // --- FUNGSI BARU UNTUK EXPAND/COLLAPSE ---
+    private fun setupExpandableLayout() {
+        binding.btnToggleInput.setOnClickListener {
+            val isVisible = binding.layoutExpandableContent.visibility == View.VISIBLE
+            if (isVisible) {
+                // Logic untuk menyembunyikan (Collapse)
+                binding.layoutExpandableContent.visibility = View.GONE
+                // Rotasi panah ke samping (-90 derajat)
+                binding.ivToggleArrow.animate().rotation(-90f).setDuration(200).start()
+            } else {
+                // Logic untuk menampilkan (Expand)
+                binding.layoutExpandableContent.visibility = View.VISIBLE
+                // Rotasi panah kembali ke bawah (0 derajat)
+                binding.ivToggleArrow.animate().rotation(0f).setDuration(200).start()
+            }
+        }
     }
 
     private fun observeViewModel() {
@@ -63,7 +88,8 @@ class InputFragment : Fragment() {
         }
 
         sharedViewModel.selectedDate.observe(viewLifecycleOwner) { calendar ->
-            val sdf = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("in", "ID"))
+            // Format tanggal dipersingkat agar muat di card
+            val sdf = SimpleDateFormat("EEE, dd MMM yyyy", Locale("in", "ID"))
             binding.tvDateValue.text = sdf.format(calendar.time)
             wisataAdapter.updateDayType(sharedViewModel.isWeekend())
             updateTotalPriceAndBudgetStatus()
@@ -71,6 +97,11 @@ class InputFragment : Fragment() {
 
         sharedViewModel.isBudgetEnabled.observe(viewLifecycleOwner) { isEnabled ->
             binding.layoutInputBudget.visibility = if (isEnabled) View.VISIBLE else View.GONE
+            // Pastikan switch sync dengan state
+            if (binding.switchBudget.isChecked != isEnabled) {
+                binding.switchBudget.isChecked = isEnabled
+            }
+
             if (!isEnabled) {
                 binding.inputBudget.text = null
                 sharedViewModel.setBudget(0L)
@@ -81,7 +112,8 @@ class InputFragment : Fragment() {
         sharedViewModel.budget.observe(viewLifecycleOwner) { updateAdapterBasedOnBudget() }
 
         sharedViewModel.currentTotalPrice.observe(viewLifecycleOwner) { price ->
-            binding.tvTotalPrice.text = "Total Harga: ${sharedViewModel.formatRupiah(price)}"
+            // Update teks total harga di header list (sebelah kanan)
+            binding.tvTotalPrice.text = "Total: ${sharedViewModel.formatRupiah(price)}"
         }
     }
 
@@ -111,7 +143,6 @@ class InputFragment : Fragment() {
             )
 
             datePickerDialog.datePicker.minDate = System.currentTimeMillis()
-
             datePickerDialog.show()
         }
     }
@@ -130,7 +161,9 @@ class InputFragment : Fragment() {
     }
 
     private fun setupBudgetFeature() {
-        binding.switchBudget.setOnCheckedChangeListener { _, isChecked -> sharedViewModel.setBudgetEnabled(isChecked) }
+        binding.switchBudget.setOnCheckedChangeListener { _, isChecked ->
+            sharedViewModel.setBudgetEnabled(isChecked)
+        }
 
         binding.inputBudget.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -148,6 +181,7 @@ class InputFragment : Fragment() {
     private fun setupRecyclerView() {
         wisataAdapter = WisataAdapter(WisataDummy.daftarWisata, emptySet()) {
             updateTotalPriceAndBudgetStatus()
+            updateStartPointDropdown()
         }
         binding.rvWisata.apply {
             adapter = wisataAdapter
@@ -155,6 +189,39 @@ class InputFragment : Fragment() {
             addItemDecoration(DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL))
         }
         updateTotalPriceAndBudgetStatus()
+        updateStartPointDropdown()
+    }
+
+    private fun updateStartPointDropdown() {
+        val selectedWisata = wisataAdapter.getSelectedWisata()
+        val hasSelection = selectedWisata.isNotEmpty()
+
+        // Start point ada di dalam layout expandable, tetap diupdate meski hidden
+        binding.layoutStartPoint.isEnabled = hasSelection
+
+        if (hasSelection) {
+            binding.dropdownStartPoint.setText(selectedStartPoint?.nama ?: "Akan dipilihkan otomatis", false)
+        } else {
+            binding.dropdownStartPoint.setText("Pilih wisata terlebih dahulu", false)
+            selectedStartPoint = null
+        }
+
+        val adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line,
+            selectedWisata.map { it.nama }
+        )
+        binding.dropdownStartPoint.setAdapter(adapter)
+
+        binding.dropdownStartPoint.setOnItemClickListener { parent, _, position, _ ->
+            val selectedName = parent.getItemAtPosition(position) as String
+            selectedStartPoint = selectedWisata.find { it.nama == selectedName }
+        }
+
+        if (selectedStartPoint != null && !selectedWisata.contains(selectedStartPoint)) {
+            selectedStartPoint = null
+            binding.dropdownStartPoint.setText("Akan dipilihkan otomatis", false)
+        }
     }
 
     private fun updateTotalPriceAndBudgetStatus() {
@@ -172,9 +239,12 @@ class InputFragment : Fragment() {
             var currentTotal = wisataAdapter.getSelectedWisata().sumOf {
                 wisataAdapter.getCurrentPrice(it).toLong()
             }
+            // Hapus item terakhir jika melebihi budget
             while (currentTotal > budget && wisataAdapter.getSelectedWisata().isNotEmpty()) {
                 wisataAdapter.removeLastSelectedItem()
-                (binding.rvWisata.adapter as? WisataAdapter)?.notifyDataSetChanged()
+                // Update recycler view manual agar checkbox ter-uncheck
+                binding.rvWisata.adapter?.notifyDataSetChanged()
+
                 currentTotal = wisataAdapter.getSelectedWisata().sumOf {
                     wisataAdapter.getCurrentPrice(it).toLong()
                 }
@@ -192,8 +262,9 @@ class InputFragment : Fragment() {
             Toast.makeText(requireContext(), "Pilih minimal 2 tempat wisata", Toast.LENGTH_SHORT).show()
             return
         }
+
         val startTime = sharedViewModel.startTimeInMinutes.value ?: 480
-        sharedViewModel.runOptimization(selectedWisata, startTime)
+        sharedViewModel.runOptimization(selectedWisata, startTime, selectedStartPoint)
         findNavController().navigate(R.id.action_navigation_input_to_navigation_result)
     }
 

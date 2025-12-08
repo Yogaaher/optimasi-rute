@@ -65,7 +65,7 @@ class SharedViewModel : ViewModel() {
         _currentTotalPrice.value = newPrice
     }
 
-    fun runOptimization(selectedWisata: List<Wisata>, startTime: Int) {
+    fun runOptimization(selectedWisata: List<Wisata>, startTime: Int, startPoint: Wisata?) {
         if (selectedWisata.isEmpty()) return
 
         _isLoading.value = true
@@ -75,7 +75,8 @@ class SharedViewModel : ViewModel() {
                     selectedWisata = selectedWisata,
                     travelTimeMatrix = WisataDummy.waktuTempuh,
                     startTimeInMinutes = startTime,
-                    isWeekend = isWeekend()
+                    isWeekend = isWeekend(),
+                    startPoint = startPoint
                 )
                 ga.run()
             }
@@ -92,7 +93,7 @@ class SharedViewModel : ViewModel() {
 
         setStartTime(selectedPackage.defaultStartHour, selectedPackage.defaultStartMinute)
         val startTime = startTimeInMinutes.value ?: (selectedPackage.defaultStartHour * 60 + selectedPackage.defaultStartMinute)
-        runOptimization(packageWisataList, startTime)
+        runOptimization(packageWisataList, startTime, null)
     }
 
     fun clearResult() {

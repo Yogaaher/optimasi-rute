@@ -31,6 +31,7 @@ class GeneticAlgorithm(
     private val travelTimeMatrix: Array<IntArray>,
     private val startTimeInMinutes: Int,
     private val isWeekend: Boolean,
+    private val startPoint: Wisata?,
     private val populationSize: Int = 100,
     private val generations: Int = 200,
     private var mutationRate: Double = 0.1,
@@ -126,7 +127,16 @@ class GeneticAlgorithm(
     }
 
     private fun createInitialPopulation(): MutableList<Chromosome> {
-        return MutableList(populationSize) { Chromosome(selectedWisata.shuffled()) }
+        return MutableList(populationSize) {
+            val route: List<Wisata>
+            if (startPoint != null) {
+                val remainingWisata = selectedWisata.filter { it != startPoint }
+                route = listOf(startPoint) + remainingWisata.shuffled()
+            } else {
+                route = selectedWisata.shuffled()
+            }
+            Chromosome(route)
+        }
     }
 
     private fun modifiedTournamentSelection(population: List<Chromosome>): Chromosome {
@@ -153,7 +163,10 @@ class GeneticAlgorithm(
         val offspring1 = MutableList<Wisata?>(size) { null }
         val offspring2 = MutableList<Wisata?>(size) { null }
 
-        val start = Random.nextInt(size)
+        val crossoverStart = if (startPoint != null) 1 else 0
+        if (size <= crossoverStart) return Pair(parent1, parent2)
+
+        val start = Random.nextInt(crossoverStart, size)
         val end = Random.nextInt(start, size)
 
         val middle1 = p1.subList(start, end + 1)
@@ -190,12 +203,13 @@ class GeneticAlgorithm(
 
         val route = chromosome.route.toMutableList()
         val size = route.size
-        if (size < 2) return
+        val mutationStart = if (startPoint != null) 1 else 0
+        if (size <= mutationStart) return
 
         val mutationCount = 2
         repeat(mutationCount) {
-            val pos1 = Random.nextInt(size)
-            val pos2 = Random.nextInt(size)
+            val pos1 = Random.nextInt(mutationStart, size)
+            val pos2 = Random.nextInt(mutationStart, size)
             if (pos1 != pos2) {
                 Collections.swap(route, pos1, pos2)
             }
