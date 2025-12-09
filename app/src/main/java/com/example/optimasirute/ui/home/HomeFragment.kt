@@ -44,6 +44,10 @@ class HomeFragment : Fragment() {
         binding.btnPaketAlam.setOnClickListener {
             showDayTypeDialog("ALAM_KELUARGA")
         }
+
+        binding.btnPaketPantai.setOnClickListener {
+            showDayTypeDialog("PANTAI")
+        }
     }
 
         private fun showDayTypeDialog(packageId: String) {
